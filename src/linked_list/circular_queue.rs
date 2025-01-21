@@ -1,5 +1,5 @@
-//! This module implements a circular queue using linked list blocks. The queue allows adding and removing elements from both ends, maintaining a maximum size.
-//! It uses a linked list of blocks to store the elements, where each block can point to its neighboring blocks.
+//! This module implements a circular queue using linked list vertexes. The queue allows adding and removing elements from both ends, maintaining a maximum size.
+//! It uses a linked list of vertexes to store the elements, where each vertex can point to its neighboring vertex.
 //! This implementation doesn't allow to read elements from the queue, only adding and removing them.
 //!
 //! # Performance
@@ -7,8 +7,8 @@
 //! - O(1) for checking if the queue is full or empty
 //!  
 //! # Implementation Details
-//! - The queue is implemented using a doubly linked list where each node (block) contains a value and pointers to the next and previous nodes.
-//! - The `CircularQueue` struct maintains a cursor pointing to the current block, the current size of the queue, and the maximum size allowed.
+//! - The queue is implemented using a doubly linked list where each node (vertex) contains a value and pointers to the next and previous nodes.
+//! - The `CircularQueue` struct maintains a cursor pointing to the current vertex, the current size of the queue, and the maximum size allowed.
 //! - The queue supports operations to add elements to either end (enqueue) and remove elements from either end (dequeue).
 //! - The queue provides methods to check if it is full or empty, and to get the number of elements in the queue.
 //! - If the queue is full and an attempt is made to add an element, an error is returned.
@@ -35,7 +35,7 @@
 //! 
 use std::{cell::RefCell, rc::Rc};
 
-use super::block::{Block, PointerName};
+use super::vertex::{Vertex, PointerName};
 
 
 pub enum Side {
@@ -51,17 +51,17 @@ impl From<Side> for PointerName {
         }
     }
 }
-/// Struct representing a circular queue using linked list blocks
+/// Struct representing a circular queue using linked list vertexes
 /// This queue allows adding and removing elements from both ends.
 /// The queue maintains a maximum size, and will return an error if an attempt is made to add an element when the queue is full.
 /// The queue can be initialized with a maximum size of 0, which means there is no limit on the number of elements it can hold.
-/// The queue uses a linked list of blocks to store the elements, where each block can point to its neighboring blocks.
+/// The queue uses a linked list of vertexes to store the elements, where each vertex can point to its neighboring vertexes.
 /// The queue supports operations to add elements to either end and remove elements from either end.
 /// The queue also provides methods to check if it is full or empty, and to get the number of elements in the queue.
 /// 
 #[derive(Debug)]
 pub struct CircularQueue<T> {
-    cursor: Option<Rc<RefCell<Block<T>>>>,
+    cursor: Option<Rc<RefCell<Vertex<T>>>>,
 
     size: usize,
     max_size: usize,
@@ -189,63 +189,63 @@ impl<T> CircularQueue<T>{
             return Err("Queue is full");
         }
         
-        // Create new block
-        let new_block_ptr = Block::new(value);
+        // Create new vertex
+        let new_vertex_ptr = Vertex::new(value);
 
         // Test if the queue is not empty
         if self.is_empty(){
            
-            // If the queue is empty, set the cursor to the new block
-            self.cursor = Some(new_block_ptr);
+            // If the queue is empty, set the cursor to the new vertex
+            self.cursor = Some(new_vertex_ptr);
 
         } else if self.len() == 1 {
 
             // Get a reference to the current cursor pointer
             let cursor_ref = self.cursor.as_ref().unwrap();
 
-            // Insert the new block. In this case, both directions points to the new block
-            cursor_ref.borrow_mut().set_pointer(Side::Left.into(), Some(&new_block_ptr));
-            cursor_ref.borrow_mut().set_pointer(Side::Right.into(), Some(&new_block_ptr));
+            // Insert the new vertex. In this case, both directions points to the new vertex
+            cursor_ref.borrow_mut().set_connection(Side::Left.into(), Some(&new_vertex_ptr));
+            cursor_ref.borrow_mut().set_connection(Side::Right.into(), Some(&new_vertex_ptr));
 
-            // Adjust the new block's pointers. In this case both directions points to the previus added block.
-            new_block_ptr.borrow_mut().set_pointer(Side::Right.into(), Some(cursor_ref));
-            new_block_ptr.borrow_mut().set_pointer(Side::Left.into(), Some(cursor_ref));
+            // Adjust the new vertex's pointers. In this case both directions points to the previus added vertex.
+            new_vertex_ptr.borrow_mut().set_connection(Side::Right.into(), Some(cursor_ref));
+            new_vertex_ptr.borrow_mut().set_connection(Side::Left.into(), Some(cursor_ref));
         
         } else {
 
             // Get a reference to the current cursor pointer
-            let cursor_block_ref = self.cursor.as_ref().unwrap();
+            let cursor_vertex_ref = self.cursor.as_ref().unwrap();
 
             // Update the references based on the side
             match side {
                 Side::Left => {
-                    // Points the right cursor of the new block to the cursor's block
-                    new_block_ptr.borrow_mut().set_pointer(Side::Right.into(), Some(cursor_block_ref));
+                    // Points the right cursor of the new vertex to the cursor's vertex
+                    new_vertex_ptr.borrow_mut().set_connection(Side::Right.into(), Some(cursor_vertex_ref));
 
-                    // Points the left cursor of the new block to the cursor's left block
-                    let cursor_left_block_ptr = self.cursor.as_ref().unwrap().borrow().get_pointer(Side::Left.into()).unwrap();
-                    new_block_ptr.borrow_mut().set_pointer(Side::Left.into(), Some(&cursor_left_block_ptr));
+                    // Points the left cursor of the new vertex to the cursor's left vertex
+                    let cursor_left_vertex_ptr = self.cursor.as_ref().unwrap().borrow().get_pointer(Side::Left.into()).unwrap();
+                    new_vertex_ptr.borrow_mut().set_connection(Side::Left.into(), Some(&cursor_left_vertex_ptr));
 
-                    // Points the letf block's right pointer to the new block
-                    cursor_left_block_ptr.borrow_mut().set_pointer(Side::Right.into(),Some(&new_block_ptr));
+                    // Points the letf vertex's right pointer to the new vertex
+                    cursor_left_vertex_ptr.borrow_mut().set_connection(Side::Right.into(),Some(&new_vertex_ptr));
 
-                    // Points the cursor's left pointer to the new block
-                    cursor_block_ref.borrow_mut().set_pointer(Side::Left.into(), Some(&new_block_ptr));
+                    // Points the cursor's left pointer to the new vertex
+                    cursor_vertex_ref.borrow_mut().set_connection(Side::Left.into(), Some(&new_vertex_ptr));
 
                 },
                 Side::Right => {
-                    // Points the left cursor of the new block to the cursor's block
-                    new_block_ptr.borrow_mut().set_pointer(Side::Left.into(), Some(cursor_block_ref));
+                    // Points the left cursor of the new vertex to the cursor's vertex
+                    new_vertex_ptr.borrow_mut().set_connection(Side::Left.into(), Some(cursor_vertex_ref));
 
-                    // Points the right cursor of the new block to the cursor's right block
-                    let cursor_right_block_ptr = self.cursor.as_ref().unwrap().borrow().get_pointer(Side::Right.into()).unwrap();
-                    new_block_ptr.borrow_mut().set_pointer(Side::Right.into(),Some(&cursor_right_block_ptr));
+                    // Points the right cursor of the new vertex to the cursor's right vertex
+                    let cursor_right_vertex_ptr = self.cursor.as_ref().unwrap().borrow().get_pointer(Side::Right.into()).unwrap();
+                    new_vertex_ptr.borrow_mut().set_connection(Side::Right.into(),Some(&cursor_right_vertex_ptr));
 
-                    // Points the right block's left pointer to the new block
-                    cursor_right_block_ptr.borrow_mut().set_pointer(Side::Left.into(), Some(&new_block_ptr));
+                    // Points the right vertex's left pointer to the new vertex
+                    cursor_right_vertex_ptr.borrow_mut().set_connection(Side::Left.into(), Some(&new_vertex_ptr));
 
-                    // Points the cursor's right pointer to the new block
-                    cursor_block_ref.borrow_mut().set_pointer(Side::Right.into(), Some(&new_block_ptr));
+                    // Points the cursor's right pointer to the new vertex
+                    cursor_vertex_ref.borrow_mut().set_connection(Side::Right.into(), Some(&new_vertex_ptr));
                 }
             }
 
@@ -286,42 +286,42 @@ impl<T> CircularQueue<T>{
             return None;
         }
 
-        // Get the current cursor Block pointer and erase the cursor
-        let block_to_remove_ref = self.cursor.take().unwrap();
+        // Get the current cursor Vertex pointer and erase the cursor
+        let vertex_to_remove_ref = self.cursor.take().unwrap();
 
 
         match self.len().cmp(&2) {
             std::cmp::Ordering::Equal => {
-                // Get the other block that will remain in the queue
-                let other_block_ptr = block_to_remove_ref.borrow().get_pointer(side_to_move.into()).unwrap();
+                // Get the other vertex that will remain in the queue
+                let other_vertex_ptr = vertex_to_remove_ref.borrow().get_pointer(side_to_move.into()).unwrap();
 
-                // Points the other block's left and right pointers to None
-                other_block_ptr.borrow_mut().set_pointer(Side::Left.into(), None);
-                other_block_ptr.borrow_mut().set_pointer(Side::Right.into(), None);
+                // Points the other vertex's left and right pointers to None
+                other_vertex_ptr.borrow_mut().set_connection(Side::Left.into(), None);
+                other_vertex_ptr.borrow_mut().set_connection(Side::Right.into(), None);
 
-                // Set the cursor to the other block
-                self.cursor = Some(other_block_ptr);
+                // Set the cursor to the other vertex
+                self.cursor = Some(other_vertex_ptr);
             },
             std::cmp::Ordering::Greater => {
-                // Get the letf and right block reference
-                let left_block_ptr = block_to_remove_ref.borrow().get_pointer(Side::Left.into()).unwrap();
-                let right_block_ptr = block_to_remove_ref.borrow().get_pointer(Side::Right.into()).unwrap();
+                // Get the letf and right vertex reference
+                let left_vertex_ptr = vertex_to_remove_ref.borrow().get_pointer(Side::Left.into()).unwrap();
+                let right_vertex_ptr = vertex_to_remove_ref.borrow().get_pointer(Side::Right.into()).unwrap();
 
-                // Points the left block's right pointer to the right block
-                left_block_ptr.borrow_mut().set_pointer(Side::Right.into(), Some(&right_block_ptr));
+                // Points the left vertex's right pointer to the right vertex
+                left_vertex_ptr.borrow_mut().set_connection(Side::Right.into(), Some(&right_vertex_ptr));
 
-                // Points the right block's left pointer to the left block
-                right_block_ptr.borrow_mut().set_pointer(Side::Left.into(), Some(&left_block_ptr));
+                // Points the right vertex's left pointer to the left vertex
+                right_vertex_ptr.borrow_mut().set_connection(Side::Left.into(), Some(&left_vertex_ptr));
 
                 // Update the cursor based on the side
                 match side_to_move {
                     Side::Left => {
-                        // Set the cursor to the left block
-                        self.cursor = Some(left_block_ptr);
+                        // Set the cursor to the left vertex
+                        self.cursor = Some(left_vertex_ptr);
                     },
                     Side::Right => {
-                        // Set the cursor to the right block
-                        self.cursor = Some(right_block_ptr);
+                        // Set the cursor to the right vertex
+                        self.cursor = Some(right_vertex_ptr);
                     }
                 }
             },
@@ -333,44 +333,44 @@ impl<T> CircularQueue<T>{
         /*
         if self.len() == 2 {
 
-            // Get the other block that will remain in the queue
-            let other_block_ptr = block_to_remove_ref.borrow().get_pointer(side_to_move).unwrap();
+            // Get the other vertex that will remain in the queue
+            let other_vertex_ptr = vertex_to_remove_ref.borrow().get_pointer(side_to_move).unwrap();
 
-            // Points the other block's left and right pointers to None
-            other_block_ptr.borrow_mut().set_pointer(None, Side::Left);
-            other_block_ptr.borrow_mut().set_pointer(None, Side::Right);
+            // Points the other vertex's left and right pointers to None
+            other_vertex_ptr.borrow_mut().set_connection(None, Side::Left);
+            other_vertex_ptr.borrow_mut().set_connection(None, Side::Right);
 
-            // Set the cursor to the other block
-            self.cursor = Some(other_block_ptr);
+            // Set the cursor to the other vertex
+            self.cursor = Some(other_vertex_ptr);
 
         }else if self.len() > 2 {
-            // Get the letf and right block reference
-            let left_block_ptr = block_to_remove_ref.borrow().get_pointer(Side::Left).unwrap();
-            let right_block_ptr = block_to_remove_ref.borrow().get_pointer(Side::Right).unwrap();
+            // Get the letf and right vertex reference
+            let left_vertex_ptr = vertex_to_remove_ref.borrow().get_pointer(Side::Left).unwrap();
+            let right_vertex_ptr = vertex_to_remove_ref.borrow().get_pointer(Side::Right).unwrap();
 
-            // Points the left block's right pointer to the right block
-            left_block_ptr.borrow_mut().set_pointer(Some(&right_block_ptr), Side::Right);
+            // Points the left vertex's right pointer to the right vertex
+            left_vertex_ptr.borrow_mut().set_connection(Some(&right_vertex_ptr), Side::Right);
 
-            // Points the right block's left pointer to the left block
-            right_block_ptr.borrow_mut().set_pointer(Some(&left_block_ptr), Side::Left);
+            // Points the right vertex's left pointer to the left vertex
+            right_vertex_ptr.borrow_mut().set_connection(Some(&left_vertex_ptr), Side::Left);
 
             // Update the cursor based on the side
             match side_to_move {
                 Side::Left => {
-                    // Set the cursor to the left block
-                    self.cursor = Some(left_block_ptr);
+                    // Set the cursor to the left vertex
+                    self.cursor = Some(left_vertex_ptr);
                 },
                 Side::Right => {
-                    // Set the cursor to the right block
-                    self.cursor = Some(right_block_ptr);
+                    // Set the cursor to the right vertex
+                    self.cursor = Some(right_vertex_ptr);
                 }
             }
         }*/
 
         self.size -= 1;
         
-        // Get data from block and discard the block
-        let data = block_to_remove_ref.borrow_mut().clear();
+        // Get data from vertex and discard the vertex
+        let data = vertex_to_remove_ref.borrow_mut().clear();
         data
     }
 }
@@ -436,11 +436,11 @@ mod tests {
     fn test_memory_leak() {
         let mut queue: CircularQueue<i32> = CircularQueue::new(10);
 
-        let mut blocks = Vec::new();
+        let mut vertexes = Vec::new();
 
         for i in 0..10 {
-            let block = Block::new(i);
-            blocks.push(block.clone());
+            let vertex = Vertex::new(i);
+            vertexes.push(vertex.clone());
             queue.enqueue(i, Side::Left).unwrap();
         }
 
@@ -456,9 +456,9 @@ mod tests {
         // Check if all references are dropped
         assert!(queue.cursor.is_none());
 
-        // Check the reference count of each block
-        for block in blocks {
-            assert_eq!(Rc::strong_count(&block), 1);
+        // Check the reference count of each vertex
+        for vertex in vertexes {
+            assert_eq!(Rc::strong_count(&vertex), 1);
         }
     }
 }

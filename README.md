@@ -12,16 +12,16 @@ Additionally, it serves as a learning tool for understanding how to work with re
 
 ### 1. Circular Queue
 
-A circular queue is a linear data structure that follows the FIFO (First In First Out) principle but connects the end of the queue back to the front, forming a circle. This implementation uses a doubly linked list of blocks, where each block can point to its neighboring blocks.
+A circular queue is a linear data structure that follows the FIFO (First In First Out) principle but connects the end of the queue back to the front, forming a circle. This implementation uses a doubly linked list of vertexes, where each vertex can point to its neighboring vertexes.
 
 **Use Cases:**
 - Task scheduling
 - Buffer management
 - Round-robin scheduling
 
-### 2. Block
+### 2. Vertex
 
-A block is a fundamental building block for linked data structures. Each block contains data and pointers to the next and previous blocks. This implementation uses `Rc<RefCell<Block<T>>>` for safe reference counting and interior mutability.
+A vertex is a fundamental building vertex for linked data structures. Each vertex contains data and pointers to the next and previous vertexes. This implementation uses `Rc<RefCell<Vertex<T>>>` for safe reference counting and interior mutability.
 
 **Use Cases:**
 - Linked lists
