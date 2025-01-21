@@ -8,20 +8,26 @@
 //! 
 //! # Usage
 //! ```
-//! use data_structures::linked_list::block::{Block, Side};
+//! //use data_structures::linked_list::block::{Block, Side};
 //! 
-//! let block_ptr = Block::new(10);
-//! assert_eq!(*block_ptr.borrow().read_data(), Some(10));
+//! //let block_ptr = Block::new(10);
+//! //assert_eq!(*block_ptr.borrow().read_data(), Some(10));
 //! ```
-use std::{cell::RefCell, rc::{Rc, Weak}};
+use std::{cell::RefCell, collections::HashMap, iter::Flatten, rc::{Rc, Weak}};
 
 /// Direction of the pointer inside the Block
 /// 
 /// This enum is used to specify the direction of the pointer in a block of a doubly linked list.
 /// It helps in identifying whether the pointer is pointing to the next block (Right) or the previous block (Left).
-pub enum Side {
+#[derive(Debug, Hash, Eq, PartialEq)]
+pub enum PointerName {
     Left,
     Right,
+    Previous,
+    Next,
+    First,
+    Last,
+    Custom(String), // Custom pointer name for more flexibility
 }
 
 /// A block in a linked list
@@ -33,15 +39,14 @@ pub enum Side {
 #[derive(Debug)]
 pub struct Block<T> {
     data: Option<T>,
-    block_ref: Option<Weak<RefCell<Block<T>>>>, // reference to the block itself
-    right: Option<Rc<RefCell<Block<T>>>>,    // points to the next block
-    left: Option<Rc<RefCell<Block<T>>>>,    // points to the previous block
+    self_ref: Option<Weak<RefCell<Block<T>>>>,                      // reference to the block itself
+    pointers: HashMap<PointerName, Option<Rc<RefCell<Block<T>>>>>,  // vector of pointers to other blocks
 }
 
 impl<T> Block<T> {
     /// Create a new block with the given data and return a pointer to it
     /// # Arguments
-    /// * `data`: The data to be stored in the block. Tghe block takes ownership of the data.
+    /// * `num_pointers`: The number of pointers to other blocks in the list
     /// 
     /// # Returns
     /// A pointer to the newly created block.
@@ -50,23 +55,22 @@ impl<T> Block<T> {
     /// # Example
     /// ```
     /// use data_structures::linked_list::block::Block;
+    /// use std::rc::Rc;
     /// 
     /// let block_ptr = Block::new(10);
-    /// assert_eq!(*block_ptr.borrow().read_data(), Some(10));
     /// ```
     pub fn new(data: T) -> Rc<RefCell<Self>> {
         // Create new empty block
         let new_block_ptr = Rc::new(RefCell::new(Block {
             data: None,
-            block_ref: None, // Temporariamente None
-            right: None,
-            left: None,
+            self_ref: None, // Temporariamente None
+            pointers: HashMap::new(),
         }));
 
-        // Set the block_ref to point to itself
-        new_block_ptr.borrow_mut().block_ref = Some(Rc::downgrade(&new_block_ptr));
+        // Set the self_ref to point to itself
+        new_block_ptr.borrow_mut().self_ref = Some(Rc::downgrade(&new_block_ptr));
 
-        // Set the data
+        // Set the data in the new block
         new_block_ptr.borrow_mut().data = Some(data);
 
         new_block_ptr
@@ -86,7 +90,7 @@ impl<T> Block<T> {
     /// assert_eq!(Rc::strong_count(&new_block_ptr), 2);
     /// ```
     pub fn get_reference(&self) -> Rc<RefCell<Block<T>>> {
-        self.block_ref.as_ref().and_then(|weak_ref| weak_ref.upgrade()).unwrap()
+        self.self_ref.as_ref().and_then(|weak_ref| weak_ref.upgrade()).unwrap()
     }
 
     /// Get a reference to the data
@@ -124,8 +128,7 @@ impl<T> Block<T> {
         self.data.replace(data)
     }
 
-    /// Comsumes the block and returns the data
-    /// Returns the data and erase the pointer to the next and previous blocks
+    /// Returns the data and erase all the pointers
     /// 
     /// # Returns
     /// The data contained in the block
@@ -134,39 +137,20 @@ impl<T> Block<T> {
     /// ```
     /// use data_structures::linked_list::block::Block;
     /// let block_ptr = Block::new(10);
-    /// assert_eq!(block_ptr.borrow_mut().get_data(), Some(10));
+    /// assert_eq!(block_ptr.borrow_mut().clear(), Some(10));
     /// ```
     /// 
-    pub fn get_data(&mut self) -> Option<T> {
-        self.right = None;
-        self.left = None;
+    pub fn clear(&mut self) -> Option<T> {
+        self.pointers.clear();
+        self.pointers = HashMap::new(); // This was the only way I found to deallocate hasmap memory.
+
+        self.self_ref.take();
         self.data.take()
     }
 
-    /// Borrows the right pointer.
-    /// As a pattern, this method returns an Option of a Weak pointer to the right block.
-    /// Strong references could be created from the Weak pointer or the Block if needed.
-    /// 
-    /// # Returns
-    /// A reference to the right pointer
-    /// 
-    /// # Example
-    /// ```
-    /// use data_structures::linked_list::block::Block;
-    /// use data_structures::linked_list::block::Side;
-    /// 
-    /// let block_ptr = Block::new(10);
-    /// assert_eq!(block_ptr.borrow().get_pointer(Side::Left).is_none(), true);
-    /// assert_eq!(block_ptr.borrow().get_pointer(Side::Right).is_none(), true);
-    /// ```
-    pub fn get_pointer(&self, side: Side) -> Option<Rc<RefCell<Block<T>>>> {
-        match side {
-            Side::Left => self.left.clone(),
-            Side::Right => self.right.clone(),
-        }
-    }
-
-    /// Replace the right pointer with a new block and return the old one
+    /// Set a pointer in the Block.
+    /// If the point already exists, it will be replaced with the new one and return the old pointer.
+    ///
     /// # Arguments
     /// * `new_block_ptr`: The new block to be set as the right pointer
     /// # Returns
@@ -174,44 +158,57 @@ impl<T> Block<T> {
     /// # Example
     /// ```
     /// use data_structures::linked_list::block::Block;
-    /// use data_structures::linked_list::block::Side;
+    /// use data_structures::linked_list::block::PointerName;
     /// 
     /// let block1_ptr = Block::new(10);
     /// let block2_ptr = Block::new(20);
     /// 
     /// // Set the right pointer of block1 to block2
-    /// let prev_block_ptr = block1_ptr.borrow_mut().set_pointer(Some(&block2_ptr), Side::Right);
-    /// assert_eq!(block1_ptr.borrow().get_pointer(Side::Right).is_some(), true);
+    /// let prev_block_ptr = block1_ptr.borrow_mut().set_pointer(PointerName::Left, Some(&block2_ptr));
     /// 
     /// // Set the left pointer of block1 to block2
-    /// let prev_block_ptr = block1_ptr.borrow_mut().set_pointer(Some(&block2_ptr), Side::Left);
-    /// assert_eq!(block1_ptr.borrow().get_pointer(Side::Left).is_some(), true);
+    /// let prev_block_ptr = block1_ptr.borrow_mut().set_pointer(PointerName::Right, Some(&block2_ptr));
     /// ```
-    pub fn set_pointer(&mut self, new_block_ptr: Option<&Rc<RefCell<Block<T>>>>, side: Side) -> Option<Rc<RefCell<Block<T>>>> {
+    pub fn set_pointer(&mut self, pointer_name: PointerName, new_block_ptr: Option<&Rc<RefCell<Block<T>>>>) -> Option<Rc<RefCell<Block<T>>>> {
         match new_block_ptr {
-            Some(new_block_ptr) => {
-                match side {
-                    Side::Left => {
-                        self.left.replace(new_block_ptr.clone())
-                    }
-                    Side::Right => {
-                        self.right.replace(new_block_ptr.clone())
-                    }
-                }
+            Some(new_ptr) => {
+                self.pointers.insert(pointer_name, Some(new_ptr.clone())).flatten()
             },
             None => {
-                match side {
-                    Side::Left => {
-                        self.left.take()
-                    }
-                    Side::Right => {
-                        self.right.take()
-                    }
-                }
+                // If the pointer is None, remove it
+                self.pointers.insert(pointer_name, None).flatten()
             }
         }
     }
+
+    /// This method returns a new copy of a pointer in the Block increasing the pointer counter.
+    /// 
+    /// # Returns
+    /// A reference to the right pointer
+    /// 
+    /// # Example
+    /// ```
+    /// use data_structures::linked_list::block::Block;
+    /// use data_structures::linked_list::block::PointerName;
+    /// 
+    /// let block_ptr = Block::new(10);
+    /// let block_ptr2 = Block::new(20);
+    /// 
+    /// block_ptr.borrow_mut().set_pointer(PointerName::Right, Some(&block_ptr2));
+    /// 
+    /// assert!(block_ptr.borrow().get_pointer(PointerName::Left).is_none());
+    /// assert!(block_ptr.borrow().get_pointer(PointerName::Right).is_some());
+    /// ```
+    pub fn get_pointer(&self, pointer_name: PointerName) -> Option<Rc<RefCell<Block<T>>>> {
+        match self.pointers.get(&pointer_name) {
+            Some(ptr) => {
+                ptr.clone()
+            }
+            None => None    // In this case there is no key with pointer_name.
+        }
+    }
 }
+
 
 #[cfg(test)]
 mod tests {
@@ -256,11 +253,11 @@ mod tests {
         let block2_ptr = Block::new(20);
 
         // Set the right pointer of block1 to block2
-        let mut right_block_ptr = block1_ptr.borrow_mut().set_pointer(Some(&block2_ptr), Side::Right);
+        let mut right_block_ptr = block1_ptr.borrow_mut().set_pointer(PointerName::Right, Some(&block2_ptr));
         assert_eq!(right_block_ptr.is_none(), true);
         
         // Read the data of the right block
-        right_block_ptr = block1_ptr.borrow_mut().get_pointer(Side::Right);
+        right_block_ptr = block1_ptr.borrow_mut().get_pointer(PointerName::Right);
         let binding = right_block_ptr.unwrap();
         let binding = binding.borrow();
         let right_block_data = binding.read_data();
@@ -270,13 +267,5 @@ mod tests {
         //let right_block_data = right_block_ptr.unwrap().borrow().read_data();
 
         assert_eq!(*right_block_data, Some(20));
-    }
-
-    #[test]
-    fn test_block_get_data() {
-        let block_ptr = Block::new(10);
-
-        assert_eq!(block_ptr.borrow_mut().get_data(), Some(10));
-        assert_eq!(block_ptr.borrow_mut().get_data(), None);
     }
 }

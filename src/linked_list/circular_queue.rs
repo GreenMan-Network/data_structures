@@ -18,7 +18,7 @@
 //! # Usage
 //! ```
 //! use data_structures::linked_list::circular_queue::CircularQueue;
-//! use data_structures::linked_list::block::Side;
+//! use data_structures::linked_list::circular_queue::Side;
 //! 
 //! let mut queue = CircularQueue::new(3);
 //! 
@@ -35,8 +35,22 @@
 //! 
 use std::{cell::RefCell, rc::Rc};
 
-use super::block::{Block, Side};
+use super::block::{Block, PointerName};
 
+
+pub enum Side {
+    Left,
+    Right,
+}
+
+impl From<Side> for PointerName {
+    fn from(side: Side) -> Self {
+        match side {
+            Side::Left => PointerName::Left,
+            Side::Right => PointerName::Right,
+        }
+    }
+}
 /// Struct representing a circular queue using linked list blocks
 /// This queue allows adding and removing elements from both ends.
 /// The queue maintains a maximum size, and will return an error if an attempt is made to add an element when the queue is full.
@@ -65,6 +79,7 @@ impl<T> CircularQueue<T>{
     /// # Example
     /// ```
     /// use data_structures::linked_list::circular_queue::CircularQueue;
+    /// 
     /// let mut queue: CircularQueue<i32> = CircularQueue::new(3);
     /// assert_eq!(queue.is_empty(), true);
     /// ```
@@ -83,7 +98,7 @@ impl<T> CircularQueue<T>{
     /// # Example
     /// ```
     /// use data_structures::linked_list::circular_queue::CircularQueue;
-    /// use data_structures::linked_list::block::Side;
+    /// use data_structures::linked_list::circular_queue::Side;
     /// 
     /// let mut queue: CircularQueue<i32> = CircularQueue::new(3);
     /// assert_eq!(queue.is_full(), false);
@@ -106,7 +121,7 @@ impl<T> CircularQueue<T>{
     /// # Example
     /// ```
     /// use data_structures::linked_list::circular_queue::CircularQueue;
-    /// use data_structures::linked_list::block::Side;
+    /// use data_structures::linked_list::circular_queue::Side;
     /// 
     /// let mut queue: CircularQueue<i32> = CircularQueue::new(3);
     /// assert_eq!(queue.is_empty(), true);
@@ -128,7 +143,7 @@ impl<T> CircularQueue<T>{
     /// # Example
     /// ```
     /// use data_structures::linked_list::circular_queue::CircularQueue;
-    /// use data_structures::linked_list::block::Side;
+    /// use data_structures::linked_list::circular_queue::Side;
     /// 
     /// let mut queue: CircularQueue<i32> = CircularQueue::new(3);
     /// 
@@ -160,7 +175,7 @@ impl<T> CircularQueue<T>{
     /// # Example
     /// ```
     /// use data_structures::linked_list::circular_queue::CircularQueue;
-    /// use data_structures::linked_list::block::Side;
+    /// use data_structures::linked_list::circular_queue::Side;
     /// 
     /// let mut queue: CircularQueue<i32> = CircularQueue::new(3);
     /// queue.enqueue(1, Side::Right).unwrap();
@@ -189,12 +204,12 @@ impl<T> CircularQueue<T>{
             let cursor_ref = self.cursor.as_ref().unwrap();
 
             // Insert the new block. In this case, both directions points to the new block
-            cursor_ref.borrow_mut().set_pointer(Some(&new_block_ptr), Side::Left);
-            cursor_ref.borrow_mut().set_pointer(Some(&new_block_ptr), Side::Right);
+            cursor_ref.borrow_mut().set_pointer(Side::Left.into(), Some(&new_block_ptr));
+            cursor_ref.borrow_mut().set_pointer(Side::Right.into(), Some(&new_block_ptr));
 
             // Adjust the new block's pointers. In this case both directions points to the previus added block.
-            new_block_ptr.borrow_mut().set_pointer(Some(cursor_ref), Side::Right);
-            new_block_ptr.borrow_mut().set_pointer(Some(cursor_ref), Side::Left);
+            new_block_ptr.borrow_mut().set_pointer(Side::Right.into(), Some(cursor_ref));
+            new_block_ptr.borrow_mut().set_pointer(Side::Left.into(), Some(cursor_ref));
         
         } else {
 
@@ -205,32 +220,32 @@ impl<T> CircularQueue<T>{
             match side {
                 Side::Left => {
                     // Points the right cursor of the new block to the cursor's block
-                    new_block_ptr.borrow_mut().set_pointer(Some(cursor_block_ref), Side::Right);
+                    new_block_ptr.borrow_mut().set_pointer(Side::Right.into(), Some(cursor_block_ref));
 
                     // Points the left cursor of the new block to the cursor's left block
-                    let cursor_left_block_ptr = self.cursor.as_ref().unwrap().borrow().get_pointer(Side::Left).unwrap();
-                    new_block_ptr.borrow_mut().set_pointer(Some(&cursor_left_block_ptr), Side::Left);
+                    let cursor_left_block_ptr = self.cursor.as_ref().unwrap().borrow().get_pointer(Side::Left.into()).unwrap();
+                    new_block_ptr.borrow_mut().set_pointer(Side::Left.into(), Some(&cursor_left_block_ptr));
 
                     // Points the letf block's right pointer to the new block
-                    cursor_left_block_ptr.borrow_mut().set_pointer(Some(&new_block_ptr), Side::Right);
+                    cursor_left_block_ptr.borrow_mut().set_pointer(Side::Right.into(),Some(&new_block_ptr));
 
                     // Points the cursor's left pointer to the new block
-                    cursor_block_ref.borrow_mut().set_pointer(Some(&new_block_ptr), Side::Left);
+                    cursor_block_ref.borrow_mut().set_pointer(Side::Left.into(), Some(&new_block_ptr));
 
                 },
                 Side::Right => {
                     // Points the left cursor of the new block to the cursor's block
-                    new_block_ptr.borrow_mut().set_pointer(Some(cursor_block_ref), Side::Left);
+                    new_block_ptr.borrow_mut().set_pointer(Side::Left.into(), Some(cursor_block_ref));
 
                     // Points the right cursor of the new block to the cursor's right block
-                    let cursor_right_block_ptr = self.cursor.as_ref().unwrap().borrow().get_pointer(Side::Right).unwrap();
-                    new_block_ptr.borrow_mut().set_pointer(Some(&cursor_right_block_ptr), Side::Right);
+                    let cursor_right_block_ptr = self.cursor.as_ref().unwrap().borrow().get_pointer(Side::Right.into()).unwrap();
+                    new_block_ptr.borrow_mut().set_pointer(Side::Right.into(),Some(&cursor_right_block_ptr));
 
                     // Points the right block's left pointer to the new block
-                    cursor_right_block_ptr.borrow_mut().set_pointer(Some(&new_block_ptr), Side::Left);
+                    cursor_right_block_ptr.borrow_mut().set_pointer(Side::Left.into(), Some(&new_block_ptr));
 
                     // Points the cursor's right pointer to the new block
-                    cursor_block_ref.borrow_mut().set_pointer(Some(&new_block_ptr), Side::Right);
+                    cursor_block_ref.borrow_mut().set_pointer(Side::Right.into(), Some(&new_block_ptr));
                 }
             }
 
@@ -250,7 +265,7 @@ impl<T> CircularQueue<T>{
     /// # Example
     /// ```
     /// use data_structures::linked_list::circular_queue::CircularQueue;
-    /// use data_structures::linked_list::block::Side;
+    /// use data_structures::linked_list::circular_queue::Side;
     /// 
     /// let mut queue: CircularQueue<i32> = CircularQueue::new(3);
     /// 
@@ -278,25 +293,25 @@ impl<T> CircularQueue<T>{
         match self.len().cmp(&2) {
             std::cmp::Ordering::Equal => {
                 // Get the other block that will remain in the queue
-                let other_block_ptr = block_to_remove_ref.borrow().get_pointer(side_to_move).unwrap();
+                let other_block_ptr = block_to_remove_ref.borrow().get_pointer(side_to_move.into()).unwrap();
 
                 // Points the other block's left and right pointers to None
-                other_block_ptr.borrow_mut().set_pointer(None, Side::Left);
-                other_block_ptr.borrow_mut().set_pointer(None, Side::Right);
+                other_block_ptr.borrow_mut().set_pointer(Side::Left.into(), None);
+                other_block_ptr.borrow_mut().set_pointer(Side::Right.into(), None);
 
                 // Set the cursor to the other block
                 self.cursor = Some(other_block_ptr);
             },
             std::cmp::Ordering::Greater => {
                 // Get the letf and right block reference
-                let left_block_ptr = block_to_remove_ref.borrow().get_pointer(Side::Left).unwrap();
-                let right_block_ptr = block_to_remove_ref.borrow().get_pointer(Side::Right).unwrap();
+                let left_block_ptr = block_to_remove_ref.borrow().get_pointer(Side::Left.into()).unwrap();
+                let right_block_ptr = block_to_remove_ref.borrow().get_pointer(Side::Right.into()).unwrap();
 
                 // Points the left block's right pointer to the right block
-                left_block_ptr.borrow_mut().set_pointer(Some(&right_block_ptr), Side::Right);
+                left_block_ptr.borrow_mut().set_pointer(Side::Right.into(), Some(&right_block_ptr));
 
                 // Points the right block's left pointer to the left block
-                right_block_ptr.borrow_mut().set_pointer(Some(&left_block_ptr), Side::Left);
+                right_block_ptr.borrow_mut().set_pointer(Side::Left.into(), Some(&left_block_ptr));
 
                 // Update the cursor based on the side
                 match side_to_move {
@@ -355,11 +370,10 @@ impl<T> CircularQueue<T>{
         self.size -= 1;
         
         // Get data from block and discard the block
-        let data = block_to_remove_ref.borrow_mut().get_data();
+        let data = block_to_remove_ref.borrow_mut().clear();
         data
     }
 }
-
 
 #[cfg(test)]
 mod tests {
