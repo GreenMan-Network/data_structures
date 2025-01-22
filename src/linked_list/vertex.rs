@@ -207,7 +207,6 @@ impl<T> Vertex<T> {
     }
 }
 
-
 #[cfg(test)]
 mod tests {
     use super::*;
