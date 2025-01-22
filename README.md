@@ -119,6 +119,7 @@ The library includes extensive unit tests to ensure correctness and performance.
 ```bash
 cargo test
 ```
+[![Tests](https://github.com/GreenMan-Network/data_structures/actions/workflows/tests.yml/badge.svg)](https://github.com/GreenMan-Network/data_structures/actions/workflows/tests.yml)
 
 ## License
 
