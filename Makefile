@@ -17,7 +17,7 @@ lint: ## Lint the project using cargo
 	cargo clippy
 
 test:			## Run tests
-	cargo test --quiet
+	cargo test
 
 run:			## Run the application
 	cargo run

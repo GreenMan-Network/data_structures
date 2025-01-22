@@ -1,11 +1,10 @@
 use super::circular_queue::{CircularQueue, Direction};
 
 pub struct FIFO<T> {
-    fifo: CircularQueue<T>
+    fifo: CircularQueue<T>,
 }
 
 impl<T> FIFO<T> {
-
     /// Creates a new FIFO with a specified maximum size.
     /// If the maximum size is zero, the FIFO can grow indefinitely.
     /// # Arguments
@@ -15,15 +14,15 @@ impl<T> FIFO<T> {
     /// # Examples
     /// ```rust
     /// use data_structures::linked_list::fifo::FIFO;
-    /// 
+    ///
     /// let fifo: FIFO<u32> = FIFO::new(5);
-    /// 
+    ///
     /// assert_eq!(fifo.len(), 0);
     /// assert_eq!(fifo.max_size(), 5);
     /// ```
     pub fn new(max_size: usize) -> Self {
         FIFO {
-            fifo: CircularQueue::new(max_size)
+            fifo: CircularQueue::new(max_size),
         }
     }
 
@@ -33,14 +32,14 @@ impl<T> FIFO<T> {
     /// # Example
     /// ```rust
     /// use data_structures::linked_list::fifo::FIFO;
-    /// 
+    ///
     /// let mut fifo: FIFO<u32> = FIFO::new(5);
-    /// 
+    ///
     /// assert_eq!(fifo.len(), 0);
-    /// 
+    ///
     /// fifo.push(1).unwrap();
     /// assert_eq!(fifo.len(), 1);
-    /// 
+    ///
     /// fifo.push(2).unwrap();
     /// assert_eq!(fifo.len(), 2);
     /// ```
@@ -54,12 +53,12 @@ impl<T> FIFO<T> {
     /// # Example
     /// ```rust
     /// use data_structures::linked_list::fifo::FIFO;
-    /// 
+    ///
     /// let fifo: FIFO<u32> = FIFO::new(5);
-    /// 
+    ///
     /// assert!(fifo.is_empty());
     /// ```
-    /// 
+    ///
     pub fn is_empty(&self) -> bool {
         self.fifo.is_empty()
     }
@@ -70,16 +69,16 @@ impl<T> FIFO<T> {
     /// # Example
     /// ```rust
     /// use data_structures::linked_list::fifo::FIFO;
-    /// 
+    ///
     /// let mut fifo: FIFO<u32> = FIFO::new(5);
-    /// 
+    ///
     /// for i in 0..5 {
     ///    fifo.push(i).unwrap();
     /// }
-    /// 
+    ///
     /// assert!(fifo.is_full());
     /// ```
-    /// 
+    ///
     pub fn is_full(&self) -> bool {
         self.fifo.is_full()
     }
@@ -90,9 +89,9 @@ impl<T> FIFO<T> {
     /// # Example
     /// ```rust
     /// use data_structures::linked_list::fifo::FIFO;
-    /// 
+    ///
     /// let fifo: FIFO<u32> = FIFO::new(5);
-    /// 
+    ///
     /// assert_eq!(fifo.max_size(), 5);
     /// ```
     pub fn max_size(&self) -> usize {
@@ -108,19 +107,19 @@ impl<T> FIFO<T> {
     /// # Example
     /// ```rust
     /// use data_structures::linked_list::fifo::FIFO;
-    /// 
+    ///
     /// let mut fifo: FIFO<i32> = FIFO::new(0);
-    /// 
+    ///
     /// fifo.push(1);
     /// fifo.push(2);
     /// fifo.push(3);
-    /// 
+    ///
     /// assert_eq!(fifo.set_max_size(2), Err("New max size is less than current size"));
     /// assert_eq!(fifo.set_max_size(3), Ok(()));
-    /// 
+    ///
     /// assert_eq!(fifo.push(4), Err("Queue is full"));
     /// ```
-    pub fn set_max_size(&mut self, max_size: usize) -> Result<(), &'static str>{
+    pub fn set_max_size(&mut self, max_size: usize) -> Result<(), &'static str> {
         self.fifo.set_max_size(max_size)
     }
 
@@ -133,9 +132,9 @@ impl<T> FIFO<T> {
     /// # Example
     /// ```rust
     /// use data_structures::linked_list::fifo::FIFO;
-    /// 
+    ///
     /// let mut fifo = FIFO::new(3);
-    /// 
+    ///
     /// assert_eq!(fifo.push(1), Ok(()));
     /// assert_eq!(fifo.push(2), Ok(()));
     /// assert_eq!(fifo.push(3), Ok(()));
@@ -152,9 +151,9 @@ impl<T> FIFO<T> {
     /// # Example
     /// ```rust
     /// use data_structures::linked_list::fifo::FIFO;
-    /// 
+    ///
     /// let mut fifo = FIFO::new(3);
-    /// 
+    ///
     /// fifo.push(1).unwrap();
     /// fifo.push(2).unwrap();
     /// fifo.push(3).unwrap();
@@ -166,7 +165,6 @@ impl<T> FIFO<T> {
     pub fn pop(&mut self) -> Option<T> {
         self.fifo.remove(Direction::Right)
     }
-
 }
 
 #[cfg(test)]
@@ -193,5 +191,4 @@ mod tests {
 
         assert_eq!(fifo.pop(), None);
     }
-
 }

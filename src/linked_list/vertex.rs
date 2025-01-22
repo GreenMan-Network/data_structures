@@ -1,18 +1,22 @@
 //! This module defines a Vertex struct that represents a vertex in a linked list.
 //! It includes methods for creating a new vertex, accessing and modifying the data, and managing pointers to the next and previous vertexes.
-//! 
+//!
 //! # Performance
 //! - Accessing the data in a vertex is O(1).
 //! - Updating the pointers to the next and previous vertex is O(1).
 //! - Creating a new vertex is O(1).
-//! 
+//!
 //! # Usage
 //! ```
 //! ```
-use std::{cell::RefCell, collections::HashMap, rc::{Rc, Weak}};
+use std::{
+    cell::RefCell,
+    collections::HashMap,
+    rc::{Rc, Weak},
+};
 
 /// Direction of the pointer inside the Vertex
-/// 
+///
 /// This enum is used to specify the direction of the pointer in a vertex of a doubly linked list.
 /// It helps in identifying whether the pointer is pointing to the next vertex.
 #[derive(Debug, Hash, Eq, PartialEq)]
@@ -33,28 +37,28 @@ pub enum PointerName {
 /// * `data`: The data contained in the vertex
 /// * `self_ref`: A weak reference to the vertex itself
 /// * `connections`: A HashMap that stores pointers to other vertexes in the list, allowing for bidirectional traversal.
-/// 
+///
 #[derive(Debug)]
 pub struct Vertex<T> {
     data: Option<T>,
-    self_ref: Option<Weak<RefCell<Vertex<T>>>>,                      // reference to the vertex itself
-    connections: HashMap<PointerName, Option<Rc<RefCell<Vertex<T>>>>>,  // vector of pointers to other vertexes
+    self_ref: Option<Weak<RefCell<Vertex<T>>>>, // reference to the vertex itself
+    connections: HashMap<PointerName, Option<Rc<RefCell<Vertex<T>>>>>, // vector of pointers to other vertexes
 }
 
 impl<T> Vertex<T> {
     /// Create a new vertex with the given data and return a pointer to it
     /// # Arguments
     /// * `num_pointers`: The number of pointers to other vertexes in the list
-    /// 
+    ///
     /// # Returns
     /// A pointer to the newly created vertex.
     /// A copy of the pointer is keep in the vertex itself, so if exists while the vertex is alive
-    /// 
+    ///
     /// # Example
     /// ```
     /// use data_structures::linked_list::vertex::Vertex;
     /// use std::rc::Rc;
-    /// 
+    ///
     /// let vertex_ptr = Vertex::new(10);
     /// ```
     pub fn new(data: T) -> Rc<RefCell<Self>> {
@@ -81,29 +85,32 @@ impl<T> Vertex<T> {
     /// ```
     /// use data_structures::linked_list::vertex::Vertex;
     /// use std::rc::Rc;
-    /// 
+    ///
     /// let vertex_ptr = Vertex::new(10);
     /// let new_vertex_ptr = vertex_ptr.borrow().get_reference();
     /// assert_eq!(Rc::strong_count(&vertex_ptr), 2);
     /// assert_eq!(Rc::strong_count(&new_vertex_ptr), 2);
     /// ```
     pub fn get_reference(&self) -> Rc<RefCell<Vertex<T>>> {
-        self.self_ref.as_ref().and_then(|weak_ref| weak_ref.upgrade()).unwrap()
+        self.self_ref
+            .as_ref()
+            .and_then(|weak_ref| weak_ref.upgrade())
+            .unwrap()
     }
 
     /// Get a reference to the data
     /// Useful for read-only access
-    /// 
+    ///
     /// # Returns
     /// A reference to the data
-    /// 
+    ///
     /// # Example
     /// ```
     /// use data_structures::linked_list::vertex::Vertex;
     /// let vertex_ptr = Vertex::new(10);
     /// assert_eq!(vertex_ptr.borrow().read_data().unwrap(), 10);
     /// ```
-    /// 
+    ///
     pub fn read_data(&self) -> &Option<T> {
         &self.data
     }
@@ -116,9 +123,9 @@ impl<T> Vertex<T> {
     /// # Example
     /// ```
     /// use data_structures::linked_list::vertex::Vertex;
-    /// 
+    ///
     /// let mut vertex_ptr = Vertex::new(10);
-    /// 
+    ///
     /// assert_eq!(vertex_ptr.borrow_mut().set_data(20), Some(10));
     /// assert_eq!(vertex_ptr.borrow().read_data().unwrap(), 20);
     /// ```
@@ -127,17 +134,17 @@ impl<T> Vertex<T> {
     }
 
     /// Returns the data and erase all the pointers
-    /// 
+    ///
     /// # Returns
     /// The data contained in the vertex
-    /// 
+    ///
     /// # Example
     /// ```
     /// use data_structures::linked_list::vertex::Vertex;
     /// let vertex_ptr = Vertex::new(10);
     /// assert_eq!(vertex_ptr.borrow_mut().clear(), Some(10));
     /// ```
-    /// 
+    ///
     pub fn clear(&mut self) -> Option<T> {
         self.connections.clear();
         self.connections = HashMap::new(); // This was the only way I found to deallocate hasmap memory.
@@ -157,21 +164,26 @@ impl<T> Vertex<T> {
     /// ```
     /// use data_structures::linked_list::vertex::Vertex;
     /// use data_structures::linked_list::vertex::PointerName;
-    /// 
+    ///
     /// let vertex1_ptr = Vertex::new(10);
     /// let vertex2_ptr = Vertex::new(20);
-    /// 
+    ///
     /// // Set the right pointer of vertex1 to vertex2
     /// let prev_vertex_ptr = vertex1_ptr.borrow_mut().set_connection(PointerName::Left, Some(&vertex2_ptr));
-    /// 
+    ///
     /// // Set the left pointer of vertex1 to vertex2
     /// let prev_vertex_ptr = vertex1_ptr.borrow_mut().set_connection(PointerName::Right, Some(&vertex2_ptr));
     /// ```
-    pub fn set_connection(&mut self, pointer_name: PointerName, connection: Option<&Rc<RefCell<Vertex<T>>>>) -> Option<Rc<RefCell<Vertex<T>>>> {
+    pub fn set_connection(
+        &mut self,
+        pointer_name: PointerName,
+        connection: Option<&Rc<RefCell<Vertex<T>>>>,
+    ) -> Option<Rc<RefCell<Vertex<T>>>> {
         match connection {
-            Some(new_connection) => {
-                self.connections.insert(pointer_name, Some(new_connection.clone())).flatten()
-            },
+            Some(new_connection) => self
+                .connections
+                .insert(pointer_name, Some(new_connection.clone()))
+                .flatten(),
             None => {
                 // If the pointer is None, remove it
                 self.connections.insert(pointer_name, None).flatten()
@@ -180,29 +192,27 @@ impl<T> Vertex<T> {
     }
 
     /// This method returns a new copy of a pointer in the Vertex increasing the pointer counter.
-    /// 
+    ///
     /// # Returns
     /// A reference to the right pointer
-    /// 
+    ///
     /// # Example
     /// ```
     /// use data_structures::linked_list::vertex::Vertex;
     /// use data_structures::linked_list::vertex::PointerName;
-    /// 
+    ///
     /// let vertex_ptr = Vertex::new(10);
     /// let vertex_ptr2 = Vertex::new(20);
-    /// 
+    ///
     /// vertex_ptr.borrow_mut().set_connection(PointerName::Right, Some(&vertex_ptr2));
-    /// 
+    ///
     /// assert!(vertex_ptr.borrow().get_pointer(PointerName::Left).is_none());
     /// assert!(vertex_ptr.borrow().get_pointer(PointerName::Right).is_some());
     /// ```
     pub fn get_pointer(&self, pointer_name: PointerName) -> Option<Rc<RefCell<Vertex<T>>>> {
         match self.connections.get(&pointer_name) {
-            Some(ptr) => {
-                ptr.clone()
-            }
-            None => None    // In this case there is no key with pointer_name.
+            Some(ptr) => ptr.clone(),
+            None => None, // In this case there is no key with pointer_name.
         }
     }
 }
@@ -224,9 +234,9 @@ mod tests {
         assert_eq!(Rc::strong_count(&vertex_ptr), 1);
 
         {
-             // Get a new references to the vertex
-             // This will increase the reference count by 1
-             #[allow(unused_variables)]
+            // Get a new references to the vertex
+            // This will increase the reference count by 1
+            #[allow(unused_variables)]
             let new_vertex_ptr_1 = vertex_ptr.borrow().get_reference();
             assert_eq!(Rc::strong_count(&vertex_ptr), 2);
 
@@ -250,15 +260,16 @@ mod tests {
         let vertex2_ptr = Vertex::new(20);
 
         // Set the right pointer vertex1 to vertex2
-        let mut right_vertex_ptr = vertex1_ptr.borrow_mut().set_connection(PointerName::Right, Some(&vertex2_ptr));
+        let mut right_vertex_ptr = vertex1_ptr
+            .borrow_mut()
+            .set_connection(PointerName::Right, Some(&vertex2_ptr));
         assert_eq!(right_vertex_ptr.is_none(), true);
-        
+
         // Read the data of the right vertex
         right_vertex_ptr = vertex1_ptr.borrow_mut().get_pointer(PointerName::Right);
         let binding = right_vertex_ptr.unwrap();
         let binding = binding.borrow();
         let right_vertex_data = binding.read_data();
-
 
         // In Rust it is necessary to divide the call as above to avoid temporary borrows issues with the compiler
         //let right_vertex_data = right_vertex_data.unwrap().borrow().read_data();

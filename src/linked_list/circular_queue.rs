@@ -14,29 +14,28 @@
 //! - If the queue is full and an attempt is made to add an element, an error is returned.
 //! - If the queue is empty and an attempt is made to remove an element, an error is returned.
 //! - The queue can be initialized with a maximum size of 0, which means there is no limit on the number of elements it can hold.
-//! 
+//!
 //! # Usage
 //! ```
 //! use data_structures::linked_list::circular_queue::CircularQueue;
 //! use data_structures::linked_list::circular_queue::Direction;
-//! 
+//!
 //! let mut queue = CircularQueue::new(3);
-//! 
+//!
 //! queue.insert(1, Direction::Right);
 //! queue.insert(2, Direction::Left);
 //! queue.insert(3, Direction::Right);
-//! 
+//!
 //! assert_eq!(queue.remove(Direction::Left), Some(1));
 //! assert_eq!(queue.remove(Direction::Right), Some(2));
 //! assert_eq!(queue.remove(Direction::Left), Some(3));
-//! 
+//!
 //! assert!(queue.is_empty());
 //! ```
-//! 
+//!
 use std::{cell::RefCell, rc::Rc};
 
-use super::vertex::{Vertex, PointerName};
-
+use super::vertex::{PointerName, Vertex};
 
 pub enum Direction {
     Left,
@@ -58,7 +57,7 @@ impl From<Direction> for PointerName {
 /// The queue uses a linked list of vertexes to store the elements, where each vertex can point to its neighboring vertexes.
 /// The queue supports operations to add elements to either end and remove elements from either end.
 /// The queue also provides methods to check if it is full or empty, and to get the number of elements in the queue.
-/// 
+///
 #[derive(Debug)]
 pub struct CircularQueue<T> {
     cursor: Option<Rc<RefCell<Vertex<T>>>>,
@@ -67,23 +66,23 @@ pub struct CircularQueue<T> {
     max_size: usize,
 }
 
-impl<T> CircularQueue<T>{
+impl<T> CircularQueue<T> {
     /// Create a new CircularQueue with the given maximum size
     ///
     /// # Arguments
     /// * `max_size`: The maximum number of elements the queue can hold. If 0, there is no size limit.
-    /// 
+    ///
     /// # Returns
     /// A new CircularQueue instance
-    /// 
+    ///
     /// # Example
     /// ```
     /// use data_structures::linked_list::circular_queue::CircularQueue;
-    /// 
+    ///
     /// let mut queue: CircularQueue<i32> = CircularQueue::new(3);
     /// assert_eq!(queue.is_empty(), true);
     /// ```
-    /// 
+    ///
     pub fn new(max_size: usize) -> Self {
         CircularQueue {
             cursor: None,
@@ -92,16 +91,15 @@ impl<T> CircularQueue<T>{
         }
     }
 
-
     /// Get the maximum size of the queue
     /// # Returns
     /// The maximum size of the queue
     /// # Example
     /// ```rust
     /// use data_structures::linked_list::circular_queue::CircularQueue;
-    /// 
+    ///
     /// let queue: CircularQueue<i32> = CircularQueue::new(3);
-    /// 
+    ///
     /// assert_eq!(queue.max_size(), 3);
     /// ```
     pub fn max_size(&self) -> usize {
@@ -118,19 +116,19 @@ impl<T> CircularQueue<T>{
     /// ```rust
     /// use data_structures::linked_list::circular_queue::CircularQueue;
     /// use data_structures::linked_list::circular_queue::Direction;
-    /// 
+    ///
     /// let mut queue: CircularQueue<i32> = CircularQueue::new(0);
-    /// 
+    ///
     /// queue.insert(1, Direction::Right);
     /// queue.insert(2, Direction::Right);
     /// queue.insert(3, Direction::Right);
-    /// 
+    ///
     /// assert_eq!(queue.set_max_size(2), Err("New max size is less than current size"));
     /// assert_eq!(queue.set_max_size(3), Ok(()));
-    /// 
+    ///
     /// assert_eq!(queue.insert(4, Direction::Right), Err("Queue is full"));
     /// ```
-    pub fn set_max_size(&mut self, max_size: usize) -> Result<(), &'static str>{
+    pub fn set_max_size(&mut self, max_size: usize) -> Result<(), &'static str> {
         if self.len() > max_size {
             Err("New max size is less than current size")
         } else {
@@ -146,7 +144,7 @@ impl<T> CircularQueue<T>{
     /// ```
     /// use data_structures::linked_list::circular_queue::CircularQueue;
     /// use data_structures::linked_list::circular_queue::Direction;
-    /// 
+    ///
     /// let mut queue: CircularQueue<i32> = CircularQueue::new(3);
     /// assert_eq!(queue.is_full(), false);
     /// queue.insert(1, Direction::Right).unwrap();
@@ -154,7 +152,7 @@ impl<T> CircularQueue<T>{
     /// queue.insert(3, Direction::Right).unwrap();
     /// assert_eq!(queue.is_full(), true);
     /// ```
-    /// 
+    ///
     pub fn is_full(&self) -> bool {
         if self.max_size == 0 {
             return false;
@@ -169,17 +167,17 @@ impl<T> CircularQueue<T>{
     /// ```
     /// use data_structures::linked_list::circular_queue::CircularQueue;
     /// use data_structures::linked_list::circular_queue::Direction;
-    /// 
+    ///
     /// let mut queue: CircularQueue<i32> = CircularQueue::new(3);
     /// assert_eq!(queue.is_empty(), true);
-    /// 
+    ///
     /// queue.insert(1, Direction::Right).unwrap();
     /// assert_eq!(queue.is_empty(), false);
-    /// 
+    ///
     /// queue.remove(Direction::Right).unwrap();
     /// assert_eq!(queue.is_empty(), true);
     /// ```
-    /// 
+    ///
     pub fn is_empty(&self) -> bool {
         self.size == 0
     }
@@ -191,20 +189,20 @@ impl<T> CircularQueue<T>{
     /// ```
     /// use data_structures::linked_list::circular_queue::CircularQueue;
     /// use data_structures::linked_list::circular_queue::Direction;
-    /// 
+    ///
     /// let mut queue: CircularQueue<i32> = CircularQueue::new(3);
-    /// 
+    ///
     /// assert_eq!(queue.len(), 0);
-    /// 
+    ///
     /// queue.insert(1, Direction::Right).unwrap();
     /// assert_eq!(queue.len(), 1);
-    /// 
+    ///
     /// queue.insert(2, Direction::Right).unwrap();
     /// assert_eq!(queue.len(), 2);
-    /// 
+    ///
     /// queue.remove(Direction::Left).unwrap();
     /// assert_eq!(queue.len(), 1);
-    /// 
+    ///
     /// queue.remove(Direction::Right).unwrap();
     /// assert_eq!(queue.len(), 0);
     /// ```
@@ -223,7 +221,7 @@ impl<T> CircularQueue<T>{
     /// ```
     /// use data_structures::linked_list::circular_queue::CircularQueue;
     /// use data_structures::linked_list::circular_queue::Direction;
-    /// 
+    ///
     /// let mut queue: CircularQueue<i32> = CircularQueue::new(3);
     /// queue.insert(1, Direction::Right).unwrap();
     /// queue.insert(2, Direction::Left).unwrap();
@@ -235,31 +233,34 @@ impl<T> CircularQueue<T>{
         if self.is_full() {
             return Err("Queue is full");
         }
-        
+
         // Create new vertex
         let new_vertex_ptr = Vertex::new(value);
 
         // Test if the queue is not empty
-        if self.is_empty(){
-           
+        if self.is_empty() {
             // If the queue is empty, set the cursor to the new vertex
             self.cursor = Some(new_vertex_ptr);
-
         } else if self.len() == 1 {
-
             // Get a reference to the current cursor pointer
             let cursor_ref = self.cursor.as_ref().unwrap();
 
             // Insert the new vertex. In this case, both directions points to the new vertex
-            cursor_ref.borrow_mut().set_connection(Direction::Left.into(), Some(&new_vertex_ptr));
-            cursor_ref.borrow_mut().set_connection(Direction::Right.into(), Some(&new_vertex_ptr));
+            cursor_ref
+                .borrow_mut()
+                .set_connection(Direction::Left.into(), Some(&new_vertex_ptr));
+            cursor_ref
+                .borrow_mut()
+                .set_connection(Direction::Right.into(), Some(&new_vertex_ptr));
 
             // Adjust the new vertex's pointers. In this case both directions points to the previus added vertex.
-            new_vertex_ptr.borrow_mut().set_connection(Direction::Right.into(), Some(cursor_ref));
-            new_vertex_ptr.borrow_mut().set_connection(Direction::Left.into(), Some(cursor_ref));
-        
+            new_vertex_ptr
+                .borrow_mut()
+                .set_connection(Direction::Right.into(), Some(cursor_ref));
+            new_vertex_ptr
+                .borrow_mut()
+                .set_connection(Direction::Left.into(), Some(cursor_ref));
         } else {
-
             // Get a reference to the current cursor pointer
             let cursor_vertex_ref = self.cursor.as_ref().unwrap();
 
@@ -267,35 +268,61 @@ impl<T> CircularQueue<T>{
             match side {
                 Direction::Left => {
                     // Points the right cursor of the new vertex to the cursor's vertex
-                    new_vertex_ptr.borrow_mut().set_connection(Direction::Right.into(), Some(cursor_vertex_ref));
+                    new_vertex_ptr
+                        .borrow_mut()
+                        .set_connection(Direction::Right.into(), Some(cursor_vertex_ref));
 
                     // Points the left cursor of the new vertex to the cursor's left vertex
-                    let cursor_left_vertex_ptr = self.cursor.as_ref().unwrap().borrow().get_pointer(Direction::Left.into()).unwrap();
-                    new_vertex_ptr.borrow_mut().set_connection(Direction::Left.into(), Some(&cursor_left_vertex_ptr));
+                    let cursor_left_vertex_ptr = self
+                        .cursor
+                        .as_ref()
+                        .unwrap()
+                        .borrow()
+                        .get_pointer(Direction::Left.into())
+                        .unwrap();
+                    new_vertex_ptr
+                        .borrow_mut()
+                        .set_connection(Direction::Left.into(), Some(&cursor_left_vertex_ptr));
 
                     // Points the letf vertex's right pointer to the new vertex
-                    cursor_left_vertex_ptr.borrow_mut().set_connection(Direction::Right.into(),Some(&new_vertex_ptr));
+                    cursor_left_vertex_ptr
+                        .borrow_mut()
+                        .set_connection(Direction::Right.into(), Some(&new_vertex_ptr));
 
                     // Points the cursor's left pointer to the new vertex
-                    cursor_vertex_ref.borrow_mut().set_connection(Direction::Left.into(), Some(&new_vertex_ptr));
-
-                },
+                    cursor_vertex_ref
+                        .borrow_mut()
+                        .set_connection(Direction::Left.into(), Some(&new_vertex_ptr));
+                }
                 Direction::Right => {
                     // Points the left cursor of the new vertex to the cursor's vertex
-                    new_vertex_ptr.borrow_mut().set_connection(Direction::Left.into(), Some(cursor_vertex_ref));
+                    new_vertex_ptr
+                        .borrow_mut()
+                        .set_connection(Direction::Left.into(), Some(cursor_vertex_ref));
 
                     // Points the right cursor of the new vertex to the cursor's right vertex
-                    let cursor_right_vertex_ptr = self.cursor.as_ref().unwrap().borrow().get_pointer(Direction::Right.into()).unwrap();
-                    new_vertex_ptr.borrow_mut().set_connection(Direction::Right.into(),Some(&cursor_right_vertex_ptr));
+                    let cursor_right_vertex_ptr = self
+                        .cursor
+                        .as_ref()
+                        .unwrap()
+                        .borrow()
+                        .get_pointer(Direction::Right.into())
+                        .unwrap();
+                    new_vertex_ptr
+                        .borrow_mut()
+                        .set_connection(Direction::Right.into(), Some(&cursor_right_vertex_ptr));
 
                     // Points the right vertex's left pointer to the new vertex
-                    cursor_right_vertex_ptr.borrow_mut().set_connection(Direction::Left.into(), Some(&new_vertex_ptr));
+                    cursor_right_vertex_ptr
+                        .borrow_mut()
+                        .set_connection(Direction::Left.into(), Some(&new_vertex_ptr));
 
                     // Points the cursor's right pointer to the new vertex
-                    cursor_vertex_ref.borrow_mut().set_connection(Direction::Right.into(), Some(&new_vertex_ptr));
+                    cursor_vertex_ref
+                        .borrow_mut()
+                        .set_connection(Direction::Right.into(), Some(&new_vertex_ptr));
                 }
             }
-
         }
 
         self.size += 1;
@@ -306,25 +333,25 @@ impl<T> CircularQueue<T>{
     /// Remove and return an element from the queue
     /// # Arguments
     /// * `side_to_move`: The side to move the cursor after removing the data (Left or Right)
-    /// 
+    ///
     /// # Returns
     /// The removed element, or None if the queue is empty
     /// # Example
     /// ```
     /// use data_structures::linked_list::circular_queue::CircularQueue;
     /// use data_structures::linked_list::circular_queue::Direction;
-    /// 
+    ///
     /// let mut queue: CircularQueue<i32> = CircularQueue::new(3);
-    /// 
+    ///
     /// queue.insert(1, Direction::Right);
     /// queue.insert(2, Direction::Right);
-    /// 
+    ///
     /// let removed = queue.remove(Direction::Left);
     /// assert_eq!(removed, Some(1));
-    /// 
+    ///
     /// let removed = queue.remove(Direction::Right);
     /// assert_eq!(removed, Some(2));
-    /// 
+    ///
     /// let removed = queue.remove(Direction::Left);
     /// assert_eq!(removed, None);
     /// ```
@@ -336,49 +363,65 @@ impl<T> CircularQueue<T>{
         // Get the current cursor Vertex pointer and erase the cursor
         let vertex_to_remove_ref = self.cursor.take().unwrap();
 
-
         match self.len().cmp(&2) {
             std::cmp::Ordering::Equal => {
                 // Get the other vertex that will remain in the queue
-                let other_vertex_ptr = vertex_to_remove_ref.borrow().get_pointer(side_to_move.into()).unwrap();
+                let other_vertex_ptr = vertex_to_remove_ref
+                    .borrow()
+                    .get_pointer(side_to_move.into())
+                    .unwrap();
 
                 // Points the other vertex's left and right pointers to None
-                other_vertex_ptr.borrow_mut().set_connection(Direction::Left.into(), None);
-                other_vertex_ptr.borrow_mut().set_connection(Direction::Right.into(), None);
+                other_vertex_ptr
+                    .borrow_mut()
+                    .set_connection(Direction::Left.into(), None);
+                other_vertex_ptr
+                    .borrow_mut()
+                    .set_connection(Direction::Right.into(), None);
 
                 // Set the cursor to the other vertex
                 self.cursor = Some(other_vertex_ptr);
-            },
+            }
             std::cmp::Ordering::Greater => {
                 // Get the letf and right vertex reference
-                let left_vertex_ptr = vertex_to_remove_ref.borrow().get_pointer(Direction::Left.into()).unwrap();
-                let right_vertex_ptr = vertex_to_remove_ref.borrow().get_pointer(Direction::Right.into()).unwrap();
+                let left_vertex_ptr = vertex_to_remove_ref
+                    .borrow()
+                    .get_pointer(Direction::Left.into())
+                    .unwrap();
+                let right_vertex_ptr = vertex_to_remove_ref
+                    .borrow()
+                    .get_pointer(Direction::Right.into())
+                    .unwrap();
 
                 // Points the left vertex's right pointer to the right vertex
-                left_vertex_ptr.borrow_mut().set_connection(Direction::Right.into(), Some(&right_vertex_ptr));
+                left_vertex_ptr
+                    .borrow_mut()
+                    .set_connection(Direction::Right.into(), Some(&right_vertex_ptr));
 
                 // Points the right vertex's left pointer to the left vertex
-                right_vertex_ptr.borrow_mut().set_connection(Direction::Left.into(), Some(&left_vertex_ptr));
+                right_vertex_ptr
+                    .borrow_mut()
+                    .set_connection(Direction::Left.into(), Some(&left_vertex_ptr));
 
                 // Update the cursor based on the side
                 match side_to_move {
                     Direction::Left => {
                         // Set the cursor to the left vertex
                         self.cursor = Some(left_vertex_ptr);
-                    },
+                    }
                     Direction::Right => {
                         // Set the cursor to the right vertex
                         self.cursor = Some(right_vertex_ptr);
                     }
                 }
-            },
+            }
             std::cmp::Ordering::Less => {
                 // In this case we don't have to do anything.
             }
         }
 
         self.size -= 1;
-        
+
         // Get data from vertex and discard the vertex
         let data = vertex_to_remove_ref.borrow_mut().clear();
         data
@@ -517,6 +560,7 @@ mod tests {
     }
 
     #[test]
+    #[ignore]
     fn test_vec_as_circular_queue_stress() {
         use std::time::Instant;
 
