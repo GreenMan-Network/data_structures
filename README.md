@@ -121,6 +121,12 @@ cargo test
 ```
 [![Tests](https://github.com/GreenMan-Network/data_structures/actions/workflows/tests.yml/badge.svg)](https://github.com/GreenMan-Network/data_structures/actions/workflows/tests.yml)
 
+## References
+
+* [noahgift/rust-new-project-template](https://github.com/noahgift/rust-new-project-template.git)
+* [rust-cli-template](https://github.com/kbknapp/rust-cli-template)
+* [hello-rust](https://github.com/nogibjj/hello-rust)
+
 ## License
 
 This library is open-source and available under the MIT license. Feel free to use and modify it for your projects.
